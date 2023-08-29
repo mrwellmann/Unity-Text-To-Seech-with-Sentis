@@ -1,12 +1,13 @@
 # Creating a TTS system with Unity 3D Sentis
 
-- [Abstract](docs/#abstract)
-- [The Story](docs/#the-story)
-- [How to run NeuML/ljspeech-jets-onnx into Unity 3D with Sentis](docs/#how-to-run-neumlljspeech-jets-onnx-into-unity-3d-with-sentis)
-- [Muse Chat](docs/#muse-chat)
-  
+- [Abstract](#abstract)
+- [The Story](#the-story)
+- [How to run NeuML/ljspeech-jets-onnx into Unity 3D with Sentis](#how-to-run-neumlljspeech-jets-onnx-into-unity-3d-with-sentis)
+	- [Muse Chat history of doing importing ljspeech-jets-onnx into Unity 3D](#muse-chat-history-of-doing-importing-ljspeech-jets-onnx-into-unity-3d)
 ## Abstract
 This repo contains a partially working TTS import into Unity 3D with Sentis. It will create an output.wav, but it's gibberish. This may be due to missing tokenization of the input. However, i think there is more than this wrong.
+
+UPDATE: Added tokenization (https://github.com/neuml/ttstokenizer) with the help of the python.scripting package https://docs.unity3d.com/Packages/com.unity.scripting.python@7.0/manual/index.html. Still some issues "Probably using the wrong list of tokens" https://discussions.unity.com/t/model-didnt-import-ljspeech-jets-onnx/265609/26.
 
 ## The Story
 This is my first attempt at using Sentis over a weekend and I have no prior experience working with AI or ML code.
@@ -30,8 +31,8 @@ A highly beneficial tool was https://netron.app/. It's a handy tool to understan
 
 The generated output.wav will not sound like English. One potential reason is the missing tokenization of the input text, as discussed at https://huggingface.co/NeuML/ljspeech-jets-onnx.
 
-## Muse Chat
-I posed questions that I could have answered myself, but I thought it would be fun to see where the conversation led.
+### Muse Chat history of doing importing ljspeech-jets-onnx into Unity 3D
+I posted some questions that I could have answered myself, but I thought it would be fun to see where the conversation led.
 
 - You can find a text copy of the conversation at [Copy Of Caht](<docs/Text-Copy-Of Chat.pdf>)
 - And here are the better readable images
