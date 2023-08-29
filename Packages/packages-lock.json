@@ -75,6 +75,13 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.unity.scripting.python": {
+      "version": "7.0.1",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
     "com.unity.sentis": {
       "version": "1.1.0-exp.2",
       "depth": 0,
