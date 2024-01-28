@@ -1,10 +1,12 @@
 using System;
 using System.Linq;
-using Unity.Sentis;
 using Unity.Sentis.Layers;
 using Unity.Sentis.ONNX;
 
 // Define onnx op importer for the If operator.
+using Unity.Sentis;
+// Add the missing using directive for the 'Unity.Sentis' namespace.
+
 [OpImport("If")]
 public class ReplaceIfOp : IOpImporter
 {

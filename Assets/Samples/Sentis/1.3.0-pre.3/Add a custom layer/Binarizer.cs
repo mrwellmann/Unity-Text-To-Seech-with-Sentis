@@ -52,20 +52,27 @@ public class Binarizer : CustomLayer
     public override Tensor Execute(Tensor[] inputTensors, ExecutionContext ctx)
     {
         // This layer only takes one input, this is the first element of the inputs array.
-        var x = inputTensors[0] as TensorFloat;
+        var X = inputTensors[0] as TensorFloat;
 
+        // Create the output tensor of the correct data type and shape.
+        var O = ctx.backend.NewOutputTensorFloat(X.shape);
+        // If the output tensor has length 0 then we can return it without doing any more calculations.
+        if (O.shape.HasZeroDims())
+            return O;
         // Create a scalar tensor from the threshold value to use in the Greater op.
         // Make sure intermediate values are disposed to avoid memory leaks.
-        using var thresholdTensor = ctx.backend.ConstantOfShape(new TensorShape(), threshold);
-        // When possible use the provided m_Ops in the context to avoid unnecessary conversions.
+        using TensorFloat thresholdTensor = ctx.backend.NewTempTensorFloat(new TensorShape());
+        ctx.backend.MemSet(thresholdTensor, threshold);
+        // When possible use the provided backend in the context to avoid unnecessary conversions.
         // e.g. uploading and downloading the data from the GPU
         // See the samples on CSharpJobs and ComputeBuffers for writing optimized code to run on each backend.
-        using var oInt = ctx.backend.Greater(x, thresholdTensor);
-        // The Greater op returns a TensorInt so we must cast this to a TensorFloat using the Cast op.
-        var o = ctx.backend.Cast(oInt, DataType.Float);
+        using TensorInt Oint = ctx.backend.NewTempTensorInt(X.shape);
+        ctx.backend.Greater(X, thresholdTensor, Oint);
+        // The Greater op outputs a TensorInt so we must cast this to a TensorFloat using the Cast method.
+        ctx.backend.Cast(Oint, O);
 
         // Return the filled output tensor, if a layer has multiple outputs the others should be stored in
         // the ExecutionContext e.g. ctx.vars.Store(outputs[1], o1);
-        return o;
+        return O;
     }
 }
