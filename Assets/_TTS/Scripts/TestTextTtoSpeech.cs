@@ -31,15 +31,15 @@ public class TestTextTtoSpeech : MonoBehaviour
 
         // Convert input text to tensor.
         var tokenizedOutput = tokenizerRunner.ExecuteTokenizer(inputText);
-        string[] tokens = tokenizedOutput.Split(' ');
-        for (int i = 0; i < tokens.Length; i++)
+        var tokenList = tokenizedOutput.Split(' ').ToList();
+        for (int i = tokenList.Count - 1; i >= 0; i--)
         {
-            if (tokens[i] == "")
+            if (tokenList[i] == "")
             {
-                tokens[i] = "0";
+                tokenList.RemoveAt(i);
             };
         }
-        int[] inputValues = tokens.Select(int.Parse).ToArray();
+        int[] inputValues = tokenList.ToArray().Select(int.Parse).ToArray();
         var inputShape = new TensorShape(inputValues.Length);
         using var input = new TensorInt(inputShape, inputValues);
 
