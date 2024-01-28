@@ -1,25 +1,15 @@
-using UnityEngine;
-using UnityEditor.Scripting.Python;
 using Python.Runtime;
 using System.IO;
+using UnityEditor.Scripting.Python;
+using UnityEngine;
 
-public class TokenizerRunner : MonoBehaviour
+public class TokenizerRunner
 {
-    [SerializeField]
-    private string inputText = "Hello World! I wish I cloud speak.";
-
     private string pythonScriptsPath = Application.dataPath + "/_TTS/PythonScripts/";
-
-    private void Start()
-    {
-        string output = ExecuteTokenizer(inputText);
-        Debug.Log(output);
-    }
 
     public string ExecuteTokenizer(string inputText)
     {
         Debug.Log(pythonScriptsPath);
-        string tokenizedResult = "";
 
         PythonRunner.EnsureInitialized();
 
@@ -50,7 +40,7 @@ print(tokenized)
 
             // Get the output from the StringWriter
             string output = stringWriter.ToString();
-
+            output = output.Substring(1, output.Length - 3);
             return output;
         }
     }

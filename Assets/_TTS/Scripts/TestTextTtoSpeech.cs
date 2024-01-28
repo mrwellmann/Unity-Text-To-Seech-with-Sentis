@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Unity.Sentis;
 using UnityEngine;
 
@@ -12,7 +13,14 @@ public class TestTextTtoSpeech : MonoBehaviour
     private BackendType backendType;
 
     [SerializeField]
-    private string inputText = "Hello World! I wish I cloud speak.";
+    private string inputText = "Hello World! I wish I could speak.";
+
+    private TokenizerRunner tokenizerRunner;
+
+    private void Awake()
+    {
+        tokenizerRunner = new TokenizerRunner();
+    }
 
     private void Start()
     {
@@ -22,12 +30,17 @@ public class TestTextTtoSpeech : MonoBehaviour
         RemoveLayersAfterLayer(model, "/generator/generator/output_conv/output_conv.2/Tanh_output_0");
 
         // Convert input text to tensor.
-        int[] inputValues = new int[inputText.Length];
-        for (int i = 0; i < inputText.Length; i++)
+        var tokenizedOutput = tokenizerRunner.ExecuteTokenizer(inputText);
+        var tokenList = tokenizedOutput.Split(' ').ToList();
+        for (int i = tokenList.Count - 1; i >= 0; i--)
         {
-            inputValues[i] = inputText[i];
+            if (tokenList[i] == "")
+            {
+                tokenList.RemoveAt(i);
+            };
         }
-        var inputShape = new TensorShape(inputText.Length);
+        int[] inputValues = tokenList.ToArray().Select(int.Parse).ToArray();
+        var inputShape = new TensorShape(inputValues.Length);
         using var input = new TensorInt(inputShape, inputValues);
 
         // Setup engine of given worker type and model.
