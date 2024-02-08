@@ -1,106 +1,152 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TMPro;
 using Unity.Sentis;
 using UnityEngine;
 
-public class TestTextTtoSpeech : MonoBehaviour
+public class TextToSpeech : MonoBehaviour
 {
-    [SerializeField]
-    private ModelAsset modelAsset;
+    [Header("Model Settings")]
+    [SerializeField] private ModelAsset modelAsset;
+    [SerializeField] private BackendType backendType;
 
-    [SerializeField]
-    private BackendType backendType;
+    [Header("Input")]
+    [SerializeField] private TMP_InputField inputField;
 
-    [SerializeField]
-    private string inputText = "Hello World! I wish I could speak.";
+    [Header("Output")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private bool saveToStreamingAssets = true;
 
     private TokenizerRunner tokenizerRunner;
 
     private void Awake()
     {
-        tokenizerRunner = new TokenizerRunner();
+        InitializeComponents();
     }
 
-    private void Start()
+    /// <summary>
+    /// Initializes necessary components on awake.
+    /// </summary>
+    private void InitializeComponents()
     {
-        // Load model for inference.
-        var model = ModelLoader.Load(modelAsset);
+        tokenizerRunner = new TokenizerRunner();
+        inputField.onEndEdit.AddListener(delegate { ConvertTextToSpeech(); });
+    }
 
+    /// <summary>
+    /// Converts text from the input field into speech, plays it, and optionally saves it.
+    /// </summary>
+    private void ConvertTextToSpeech()
+    {
+        if (string.IsNullOrWhiteSpace(inputField.text)) return;
+
+        var model = ModelLoader.Load(modelAsset);
         RemoveLayersAfterLayer(model, "/generator/generator/output_conv/output_conv.2/Tanh_output_0");
 
-        // Convert input text to tensor.
-        var tokenizedOutput = tokenizerRunner.ExecuteTokenizer(inputText);
-        var tokenList = tokenizedOutput.Split(' ').ToList();
-        for (int i = tokenList.Count - 1; i >= 0; i--)
-        {
-            if (tokenList[i] == "")
-            {
-                tokenList.RemoveAt(i);
-            };
-        }
-        int[] inputValues = tokenList.ToArray().Select(int.Parse).ToArray();
-        var inputShape = new TensorShape(inputValues.Length);
-        using var input = new TensorInt(inputShape, inputValues);
+        var inputValues = TokenizeInput(inputField.text);
+        if (inputValues == null) return;
 
-        // Setup engine of given worker type and model.
+        var audioClip = GenerateSpeech(model, inputValues);
+        if (audioClip == null) return;
+
+        PlayAudioClip(audioClip);
+        if (saveToStreamingAssets) SaveToStreamingAssets(audioClip);
+    }
+
+    /// <summary>
+    /// Tokenizes the input text and converts it to an array of integers.
+    /// </summary>
+    /// <param name="inputText">The text to tokenize.</param>
+    /// <returns>An array of integer tokens.</returns>
+    private int[] TokenizeInput(string inputText)
+    {
+        var tokenizedOutput = tokenizerRunner.ExecuteTokenizer(inputText).Split(' ').Where(token => !string.IsNullOrEmpty(token)).ToList();
+        return tokenizedOutput.Select(int.Parse).ToArray();
+    }
+
+    /// <summary>
+    /// Generates speech from tokenized input using the specified model.
+    /// </summary>
+    /// <param name="model">The loaded model for generating speech.</param>
+    /// <param name="inputValues">The tokenized input values.</param>
+    /// <returns>An AudioClip containing the generated speech.</returns>
+    private AudioClip GenerateSpeech(Model model, int[] inputValues)
+    {
+        using var input = new TensorInt(new TensorShape(inputValues.Length), inputValues);
         using var engine = WorkerFactory.CreateWorker(backendType, model);
         engine.SetInput("text", input);
         engine.Execute();
-
-        // Get output and cast to the appropriate tensor type (e.g. TensorFloat).
         var output = engine.PeekOutput() as TensorFloat;
-
-        AudioClip audioClip = CovertToAudioClip(output);
-        SaveToStreamingAssets(audioClip);
-
-        Debug.Log("Success!");
+        return output != null ? ConvertToAudioClip(output) : null;
     }
 
+    /// <summary>
+    /// Plays the provided AudioClip.
+    /// </summary>
+    /// <param name="audioClip">The AudioClip to play.</param>
+    private void PlayAudioClip(AudioClip audioClip)
+    {
+        audioSource.clip = audioClip;
+        audioSource.Play();
+    }
+
+    /// <summary>
+    /// Removes model layers after a specified layer.
+    /// </summary>
+    /// <param name="model">The model to modify.</param>
+    /// <param name="layerName">The name of the layer after which to remove all layers.</param>
     private void RemoveLayersAfterLayer(Model model, string layerName)
     {
         int index = model.layers.FindIndex(layer => layer.name == layerName);
         if (index != -1)
         {
-            var newLayers = model.layers.GetRange(0, index + 1);
-            model.layers = newLayers;
-
-            // Set the output of the model to the output of the last layer we want to keep.
+            model.layers = model.layers.GetRange(0, index + 1);
             model.outputs = new List<string> { layerName };
-
-            Debug.Log("Layers Removed!");
         }
-        else
-        {
-            Debug.LogError("Layer not found.");
-        }
+        else Debug.LogError("Layer not found.");
     }
 
-    private AudioClip CovertToAudioClip(TensorFloat output)
+    /// <summary>
+    /// Converts a TensorFloat to an AudioClip.
+    /// </summary>
+    /// <param name="output">The TensorFloat containing the audio data.</param>
+    /// <returns>An AudioClip generated from the TensorFloat data.</returns>
+    private AudioClip ConvertToAudioClip(TensorFloat output)
     {
         output.MakeReadable();
-
-        // Convert TensorFloat to AudioClip and save as WAV file.
         float[] audioData = output.ToReadOnlyArray();
-        // Set the sample rate according to your Text To Speech model.
-        int sampleRate = 22050;
+        int sampleRate = 22050; // Sample rate may vary depending on the model
         AudioClip audioClip = AudioClip.Create("TTSOutput", audioData.Length, 1, sampleRate, false);
         audioClip.SetData(audioData, 0);
         return audioClip;
     }
 
+    /// <summary>
+    /// Saves the AudioClip to the StreamingAssets folder.
+    /// </summary>
+    /// <param name="audioClip">The AudioClip to save.</param>
     private void SaveToStreamingAssets(AudioClip audioClip)
     {
-        // Ensure the StreamingAssets folder exists.
-        string outputFolder = Application.streamingAssetsPath;
-        if (!Directory.Exists(outputFolder))
-        {
-            Directory.CreateDirectory(outputFolder);
-        }
-
-        SaveAudioClipToWav(audioClip, Path.Combine(Application.streamingAssetsPath, "output.wav"));
+        string outputPath = Path.Combine(Application.streamingAssetsPath, "output.wav");
+        EnsureDirectoryExists(Application.streamingAssetsPath);
+        SaveAudioClipToWav(audioClip, outputPath);
     }
 
+    /// <summary>
+    /// Ensures that a directory exists, creating it if it does not.
+    /// </summary>
+    /// <param name="path">The directory path to check and potentially create.</param>
+    private void EnsureDirectoryExists(string path)
+    {
+        if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+    }
+
+    /// <summary>
+    /// Saves an AudioClip as a WAV file at the specified path.
+    /// </summary>
+    /// <param name="clip">The AudioClip to save.</param>
+    /// <param name="filePath">The file path to save the WAV file.</param>
     private void SaveAudioClipToWav(AudioClip clip, string filePath)
     {
         using var fileStream = new FileStream(filePath, FileMode.Create);
