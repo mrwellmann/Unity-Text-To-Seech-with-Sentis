@@ -2,11 +2,15 @@ using System;
 using System.Linq;
 using Unity.Sentis.Layers;
 using Unity.Sentis.ONNX;
-
-// Define onnx op importer for the If operator.
 using Unity.Sentis;
-// Add the missing using directive for the 'Unity.Sentis' namespace.
 
+/// <summary>
+/// This defines an onnx op importer for the If operator.
+/// The If will be replaced with a no-op layer when the onnx file it imported.
+/// </summary>
+/// <remarks>
+/// The If operator is not supported by Sentis yet. https://discussions.unity.com/t/model-didnt-import-ljspeech-jets-onnx/265609/14
+/// <remarks>
 [OpImport("If")]
 public class ReplaceIfOp : IOpImporter
 {

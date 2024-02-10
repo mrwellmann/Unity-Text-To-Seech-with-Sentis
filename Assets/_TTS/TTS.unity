@@ -130,7 +130,7 @@ GameObject:
   - component: {fileID: 374047771}
   - component: {fileID: 374047772}
   m_Layer: 0
-  m_Name: TTS Test
+  m_Name: TTS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -167,6 +167,7 @@ MonoBehaviour:
   backendType: 512
   inputField: {fileID: 1519108204}
   audioSource: {fileID: 1768998348}
+  saveToStreamingAssets: 1
 --- !u!1 &765776304
 GameObject:
   m_ObjectHideFlags: 0

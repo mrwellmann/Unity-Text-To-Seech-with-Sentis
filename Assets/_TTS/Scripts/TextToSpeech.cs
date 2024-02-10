@@ -61,8 +61,12 @@ public class TextToSpeech : MonoBehaviour
     /// <returns>An array of integer tokens.</returns>
     private int[] TokenizeInput(string inputText)
     {
-        var tokenizedOutput = tokenizerRunner.ExecuteTokenizer(inputText).Split(' ').Where(token => !string.IsNullOrEmpty(token)).ToList();
-        return tokenizedOutput.Select(int.Parse).ToArray();
+
+        string pythonScriptsPath = Application.dataPath + "/_TTS/Scripts/Python/";
+        var tokenizedOutput = tokenizerRunner.ExecuteTokenizer(inputText, pythonScriptsPath);
+        var tokenizedStrings = tokenizedOutput.Split(' ').Where(token => !string.IsNullOrEmpty(token)).ToList();
+        var integerTokens = tokenizedStrings.Select(int.Parse).ToArray();
+        return integerTokens;
     }
 
     /// <summary>

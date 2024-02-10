@@ -1,5 +1,8 @@
-# I put the folder into gitignore to save LFS space. You need do download the ONNX file from https://huggingface.co/NeuML/ljspeech-jets-onnx/tree/main.
-Assets/_TTS/DataModels/ljspeech-jets-onnx/model*
+# You need do download the ONNX file from https://huggingface.co/NeuML/ljspeech-jets-onnx/tree/main.
+Assets/_TTS/ONNX-Models/ljspeech-jets-onnx/model*
+
+# Python cache
+Assets/_TTS/Scripts/Python/__pycache__*
 
 # Created by https://www.gitignore.io/api/unity
 # Edit at https://www.gitignore.io/?templates=unity

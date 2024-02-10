@@ -5,18 +5,17 @@ using UnityEngine;
 
 public class TokenizerRunner
 {
-    private string pythonScriptsPath = Application.dataPath + "/_TTS/PythonScripts/";
-
     /// <summary>
     /// Executes the tokenizer script with the provided input text.
     /// </summary>
     /// <param name="inputText">The input text to tokenize.</param>
+    /// <param name="pythonScriptsPath">Full path to the Python scripts.</param>
     /// <returns>The tokenized string.</returns>
-    public string ExecuteTokenizer(string inputText)
+    public string ExecuteTokenizer(string inputText, string pythonScriptsPath)
     {
         PythonRunner.EnsureInitialized();
         inputText = EscapeInputText(inputText);
-        string pythonScript = GeneratePythonScript(inputText);
+        string pythonScript = GeneratePythonScript(inputText, pythonScriptsPath);
         return RunPythonScriptAndCaptureOutput(pythonScript);
     }
 
@@ -31,14 +30,16 @@ public class TokenizerRunner
     }
 
     /// <summary>
-    /// Generates the Python script to execute, incorporating the escaped input text and path adjustments.
+    /// Generates the tokenizer Python script, incorporating the escaped input text.
     /// </summary>
     /// <param name="inputText">The escaped input text to tokenize.</param>
+    /// <param name="pythonScriptsPath">The path to the Python scripts.</param> 
     /// <returns>The Python script as a string.</returns>
     /// <remarks>
+    /// Changing the intention of the Python script will break the script.
     /// Using raw string literals (r, like r"my\path".), which do not treat backslashes as escape characters.
     /// </remarks>
-    private string GeneratePythonScript(string inputText)
+    private string GeneratePythonScript(string inputText, string pythonScriptsPath)
     {
         return $@"
 import sys
@@ -53,7 +54,7 @@ with open(r'{pythonScriptsPath}config.yaml', 'r', encoding='utf-8') as f:
 tokenizer = TTSTokenizer(config['token']['list'])
 tokenized = tokenizer(r'{inputText}')
 print(tokenized)
-";
+        ";
     }
 
     /// <summary>
